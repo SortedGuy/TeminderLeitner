@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leitner System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+    
+        .leitner-container {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            gap: 20px;
+            flex-wrap: nowrap; 
+        }
+    
+        .box {
+            flex: 1; 
+            min-width: 300px; 
+            max-width: 30%; 
+            padding: 20px;
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.7);
+            transition: transform 0.2s;
+        }
+    
+        .box:hover {
+            transform: scale(1.02);
+        }
+    
+        .box h2 {
+            color: #ffffff;
+        }
+    
+        .drop-area {
+            border: 2px dashed #666;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #aaa;
+            transition: background-color 0.3s;
+        }
+    
+        .drop-area:hover {
+            background-color: #333;
+        }
+    
+        .card-list {
+            list-style-type: none;
+            padding-left: 0;
+            max-height: 300px; 
+            overflow-y: auto; 
+        }
+    
+        .card-list li {
+            background-color: #333333;
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 5px;
+            cursor: move;
+            user-select: none;
+            transition: background-color 0.3s;
+            display: flex;
+            flex-direction: column; 
+            justify-content: space-between; 
+            align-items: stretch; 
+            overflow: hidden; 
+        }
+    
+        .card-list li:hover {
+            background-color: #444444;
+        }
+    
+        .controls input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #2a2a2a;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+        }
+    
+        .controls button {
+            padding: 10px;
+            width: 100%;
+            background-color: #4caf50;
+            border: none;
+            border-radius: 5px;
+            color: #ffffff;
+            cursor: pointer;
+        }
+    
+        .controls button:hover {
+            background-color: #45a049;
+        }
+    
+        .answer {
+            margin-top: 10px;
+            color: #ffffff;
+            padding: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+            white-space: normal;
+        }
+    
+        button.show-answer {
+            margin-top: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 5px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+    
+        button.show-answer:hover {
+            background-color: #0056b3;
+        }
+    
+        button.remove-card {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+    
+        button.remove-card:hover {
+            background-color: #c0392b;
+        }
+    
+        .hidden {
+            display: none;
+        }
+    
+        .guide {
+            background-color: #2c2c2c; 
+            color: #ffffff; 
+            padding: 20px; 
+            border-radius: 8px; 
+            max-width: 1000px; 
+            margin: 20px auto; 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 20px; 
+        }
+    
+        .guide h2 {
+            text-align: center; 
+            font-size: 24px; 
+            margin-bottom: 20px; 
+            width: 100%; 
+        }
+    
+        .guide-step {
+            background-color: #3a3a3a; 
+            border-radius: 5px; 
+            padding: 15px; 
+            margin-bottom: 0; 
+            flex: 1 1 300px; 
+            border: 3px solid transparent; 
+            transition: background-color 0.3s, border-color 0.3s; 
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); 
+        }
+    
+        .guide-step h3 {
+            margin: 0 0 10px; /
+        }
+    
+        .guide-step:hover {
+            background-color: #4a4a4a; 
+            border-color: #4caf50; 
+        }
+    
+        .study-frequency {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #aaa;
+        }
+    
+        /* Button Styles */
+        .delete-all-btn {
+            background-color: #ff4d4d; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            padding: 10px 20px; 
+            font-size: 16px; 
+            cursor: pointer; 
+            transition: background-color 0.3s; 
+            margin-bottom: 10px; 
+        }
+    
+        /* Button Hover Effect */
+        .delete-all-btn:hover {
+            background-color: #ff1a1a; 
+        }
+    
+        /* Button Active Effect */
+        .delete-all-btn:active {
+            background-color: #cc0000; 
+        }
+    
+        /* Media Queries for Responsive Design */
+        @media (max-width: 768px) {
+            .leitner-container {
+                flex-direction: column; 
+            }
+    
+            .box {
+                width: 100%; 
+                margin-bottom: 20px; 
+            }
+        }
+    
+        @media (max-width: 480px) {
+            .guide-step {
+                flex: 1 1 100%; 
+            }
+    
+            .controls input,
+            .controls button {
+                font-size: 14px; 
+            }
+    
+            .delete-all-btn {
+                font-size: 14px; 
+            }
+        }
+        .beta-version {
+    text-align: center; 
+    font-size: 28px; 
+    color: #ffffff; 
+    margin: 20px 0; 
+    font-weight: bold; 
+    border-bottom: 2px solid #4caf50; 
+    padding-bottom: 10px; 
+    letter-spacing: 1px; 
+    text-transform: uppercase; 
+}
+
+    </style>
+    
+    
+</head>
+<body>
+    <h2 class="beta-version">VERSIUNE BETA</h2>
+
+    <div class="leitner-container">
+        <!-- Box 1 - nu stiu -->
+        <div class="box" id="box1">
+            <h2>Inca nu inteleg</h2>
+            <div class="drop-area" ondragover="event.preventDefault()" ondrop="dropCard(event, 'box1')">Drop a card here</div>
+            <ul id="box1-cards" class="card-list"></ul>
+            <div class="controls">
+                <input type="text" id="box1-input" placeholder="New Question">
+                <input type="text" id="box1-answer-input" placeholder="New Answer">
+                <button onclick="addCard('box1')">Adauga un card nou</button>
+            </div>
+            <div class="study-frequency"><h2>Repeta: in fiecare zi</h2></div>
+            <button class="delete-all-btn" onclick="deleteAllCards('box1')">Șterge Toate Cardurile</button>
+        </div>
+
+        <!-- Box 2 - fifti fifti -->
+        <div class="box" id="box2">
+            <h2>Inteleg 50%</h2>
+            <div class="drop-area" ondragover="event.preventDefault()" ondrop="dropCard(event, 'box2')">Drop a card here</div>
+            <ul id="box2-cards" class="card-list"></ul>
+            <div class="controls">
+                <input type="text" id="box2-input" placeholder="New Question">
+                <input type="text" id="box2-answer-input" placeholder="New Answer">
+                <button onclick="addCard('box2')">Adauga un card nou</button>
+            </div>
+            <div class="study-frequency"><h2>Repeta: 3 ori pe saptamana</h2></div>
+            <button class="delete-all-btn" onclick="deleteAllCards('box2')">Șterge Toate Cardurile</button>
+        </div>
+
+        <!-- Box 3 - Got it! -->
+        <div class="box" id="box3">
+            <h2>Gata, inteleg!</h2>
+            <div class="drop-area" ondragover="event.preventDefault()" ondrop="dropCard(event, 'box3')">Drop a card here</div>
+            <ul id="box3-cards" class="card-list"></ul>
+            <div class="controls">
+                <input type="text" id="box3-input" placeholder="New Question">
+                <input type="text" id="box3-answer-input" placeholder="New Answer">
+                <button onclick="addCard('box3')">Adauga un card nou</button>
+            </div>
+            <div class="study-frequency"><h2>Repeta: odata pe saptamana</h2></div>
+            <button class="delete-all-btn" onclick="deleteAllCards('box3')">Șterge Toate Cardurile </button>
+        </div>
+    </div>
+
+    <div class="guide">
+        <h2>Ghid de Utilizare a Sistemului Leitner</h2>
+    
+        <div class="guide-step">
+            <h3>Ce este Sistemul Leitner?</h3>
+            <p>Sistemul Leitner este o metodă de învățare eficientă, bazată pe repetarea distribuită a informațiilor. Această tehnică te ajută să memorezi informații prin revizuirea constantă a cardurilor de învățare (flashcards), acordând mai mult timp cardurilor pe care le găsești mai dificile.</p>
+        </div>
+    
+        <div class="guide-step">
+            <h3>Cum funcționează?</h3>
+            <ol>
+                <li><strong>Organizarea Cardurilor</strong>: Cardurile sunt împărțite în trei cutii (sau nivele) în funcție de cât de bine le stăpânești.</li>
+                <li><strong>Adăugarea Cardurilor</strong>: Introdu o întrebare și un răspuns în câmpurile corespunzătoare și apasă butonul „Adaugă card nou” pentru a crea un card de învățare.</li>
+                <li><strong>Revizuiește Cardurile</strong>: Trage cardurile dintr-o cutie în alta în funcție de cât de bine le știi.</li>
+                <li><strong>Studiază Regulat</strong>: Revizuiește cardurile din cutia 1 mai frecvent.</li>
+                <li><strong>Personalizează-ți Studiul</strong>: Poți adăuga orice număr de carduri și poți organiza informațiile în funcție de nevoile tale de învățare.</li>
+            </ol>
+        </div>
+    
+        <div class="guide-step">
+            <h3>Avantajele Sistemului Leitner:</h3>
+            <ul>
+                <li><strong>Îmbunătățește Rata de Memorare</strong>: Te ajută să te concentrezi pe ceea ce ai nevoie să înveți.</li>
+                <li><strong>Flexibilitate</strong>: Poți adapta sistemul la stilul tău de învățare.</li>
+                <li><strong>Fără Distrageri</strong>: Sistemul este simplu și ușor de utilizat.</li>
+            </ul>
+        </div>
+    </div>
+    
+
+    <script>
+        // Load cards from localStorage
+        window.onload = function() {
+            for (let i = 1; i <= 3; i++) {
+                const cards = JSON.parse(localStorage.getItem(`box${i}Cards`)) || [];
+                cards.forEach(card => addCardToBox(`box${i}`, card.question, card.answer));
+            }
+        };
+        
+        function addCard(boxId) {
+            const questionInput = document.getElementById(`${boxId}-input`);
+            const answerInput = document.getElementById(`${boxId}-answer-input`);
+            const question = questionInput.value.trim();
+            const answer = answerInput.value.trim();
+        
+            if (question && answer) {
+                addCardToBox(boxId, question, answer);
+                saveCardToLocalStorage(boxId, question, answer);
+                questionInput.value = '';
+                answerInput.value = '';
+            }
+        }
+        
+        function addCardToBox(boxId, question, answer) {
+            const cardList = document.getElementById(`${boxId}-cards`);
+            const listItem = document.createElement('li');
+            listItem.draggable = true;
+            listItem.innerHTML = `
+                <strong>${question}</strong>
+                <p class="answer hidden">${answer}</p>
+                <button class="show-answer" onclick="toggleAnswer(this)">Afișează Răspuns</button>
+                <button class="remove-card" onclick="removeCard(this, '${boxId}', '${question}', '${answer}')">Șterge Card</button>
+            `;
+            cardList.appendChild(listItem);
+            listItem.ondragstart = drag;
+            listItem.ondrop = function(event) { dropCard(event, boxId); };
+            listItem.ondragover = function(event) { event.preventDefault(); };
+        }
+        
+        function saveCardToLocalStorage(boxId, question, answer) {
+            const cards = JSON.parse(localStorage.getItem(`${boxId}Cards`)) || [];
+            cards.push({ question, answer });
+            localStorage.setItem(`${boxId}Cards`, JSON.stringify(cards));
+        }
+        
+        function toggleAnswer(button) {
+            const answer = button.previousElementSibling;
+            answer.classList.toggle('hidden');
+            button.innerText = answer.classList.contains('hidden') ? 'Afișează Răspuns' : 'Ascunde Răspuns';
+        }
+        
+        function removeCard(button, boxId, question, answer) {
+            const cardList = document.getElementById(`${boxId}-cards`);
+            cardList.removeChild(button.parentElement);
+            removeCardFromLocalStorage(boxId, question, answer);
+        }
+        
+        function removeCardFromLocalStorage(boxId, question, answer) {
+            let cards = JSON.parse(localStorage.getItem(`${boxId}Cards`)) || [];
+            cards = cards.filter(card => !(card.question === question && card.answer === answer));
+            localStorage.setItem(`${boxId}Cards`, JSON.stringify(cards));
+        }
+        
+        function deleteAllCards(boxId) {
+            const cardList = document.getElementById(`${boxId}-cards`);
+            cardList.innerHTML = ''; 
+            localStorage.removeItem(`${boxId}Cards`); 
+        }
+        
+        function drag(event) {
+            event.dataTransfer.setData("text/plain", event.target.innerHTML);
+            event.dataTransfer.setData("boxId", event.target.closest('ul').id);
+        }
+        
+        function dropCard(event, boxId) {
+            event.preventDefault();
+            const cardData = event.dataTransfer.getData("text/plain");
+            const sourceBoxId = event.dataTransfer.getData("boxId").replace('-cards', '');
+        
+            if (sourceBoxId !== boxId) {
+                const question = extractQuestionAndAnswer(cardData)[0];
+                const count = countOccurrencesInBox(boxId, question);
+        
+                // Check if the question is already in the box twice
+                if (count >= 2) {
+                    alert("Această întrebare a fost deja adăugată de 2 ori în această cutie.");
+                    return; 
+                }
+        
+                const cardList = document.getElementById(`${boxId}-cards`);
+                const listItem = document.createElement('li');
+                listItem.draggable = true; 
+                listItem.innerHTML = cardData;
+                cardList.appendChild(listItem);
+        
+                // Reassign drag-and-drop event handlers
+                listItem.ondragstart = drag;
+                listItem.ondrop = function(event) { dropCard(event, boxId); };
+                listItem.ondragover = function(event) { event.preventDefault(); };
+        
+                // Remove from the source box and update local storage
+                removeCardFromLocalStorage(sourceBoxId, ...extractQuestionAndAnswer(cardData));
+                saveCardToLocalStorage(boxId, ...extractQuestionAndAnswer(cardData));
+            }
+        }
+        
+        function extractQuestionAndAnswer(cardData) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(cardData, 'text/html');
+            const question = doc.querySelector('strong').innerText;
+            const answer = doc.querySelector('.answer').innerText;
+            return [question, answer];
+        }
+        
+        function countOccurrencesInBox(boxId, question) {
+            const cards = JSON.parse(localStorage.getItem(`${boxId}Cards`)) || [];
+            return cards.filter(card => card.question === question).length;
+        }
+        </script>
+        
+    
+</body>
+</html>
