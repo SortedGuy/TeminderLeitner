@@ -339,123 +339,170 @@
     
 
     <script>
-        // Load cards from localStorage
-        window.onload = function() {
-            for (let i = 1; i <= 3; i++) {
-                const cards = JSON.parse(localStorage.getItem(`box${i}Cards`)) || [];
-                cards.forEach(card => addCardToBox(`box${i}`, card.question, card.answer));
-            }
-        };
-        
-        function addCard(boxId) {
-            const questionInput = document.getElementById(`${boxId}-input`);
-            const answerInput = document.getElementById(`${boxId}-answer-input`);
-            const question = questionInput.value.trim();
-            const answer = answerInput.value.trim();
-        
-            if (question && answer) {
-                addCardToBox(boxId, question, answer);
-                saveCardToLocalStorage(boxId, question, answer);
-                questionInput.value = '';
-                answerInput.value = '';
-            }
+// Load cards from localStorage
+window.onload = function() {
+    for (let i = 1; i <= 3; i++) {
+        const cards = JSON.parse(localStorage.getItem(`box${i}Cards`)) || [];
+        cards.forEach(card => addCardToBox(`box${i}`, card.question, card.answer));
+    }
+};
+
+function addCard(boxId) {
+    const questionInput = document.getElementById(`${boxId}-input`);
+    const answerInput = document.getElementById(`${boxId}-answer-input`);
+    const question = questionInput.value.trim();
+    const answer = answerInput.value.trim();
+
+    if (question && answer) {
+        addCardToBox(boxId, question, answer);
+        saveCardToLocalStorage(boxId, question, answer);
+        questionInput.value = '';
+        answerInput.value = '';
+    }
+}
+
+function addCardToBox(boxId, question, answer) {
+    const cardList = document.getElementById(`${boxId}-cards`);
+    const listItem = document.createElement('li');
+    listItem.draggable = true; // For desktop
+    listItem.innerHTML = `
+        <strong>${question}</strong>
+        <p class="answer hidden">${answer}</p>
+        <button class="show-answer" onclick="toggleAnswer(this)">Afișează Răspuns</button>
+        <button class="remove-card" onclick="removeCard(this, '${boxId}', '${question}', '${answer}')">Șterge Card</button>
+    `;
+    cardList.appendChild(listItem);
+    
+    // Desktop drag-and-drop
+    listItem.ondragstart = drag;
+    listItem.ondrop = function(event) { dropCard(event, boxId); };
+    listItem.ondragover = function(event) { event.preventDefault(); };
+
+    // Mobile touch events
+    listItem.addEventListener('touchstart', function(event) {
+        event.stopPropagation();
+        handleTouchStart(event, listItem, boxId);
+    });
+    
+    listItem.addEventListener('touchmove', function(event) {
+        event.stopPropagation();
+        handleTouchMove(event);
+    });
+
+    listItem.addEventListener('touchend', function(event) {
+        event.stopPropagation();
+        handleTouchEnd(event, boxId);
+    });
+}
+
+function saveCardToLocalStorage(boxId, question, answer) {
+    const cards = JSON.parse(localStorage.getItem(`${boxId}Cards`)) || [];
+    cards.push({ question, answer });
+    localStorage.setItem(`${boxId}Cards`, JSON.stringify(cards));
+}
+
+function toggleAnswer(button) {
+    const answer = button.previousElementSibling;
+    answer.classList.toggle('hidden');
+    button.innerText = answer.classList.contains('hidden') ? 'Afișează Răspuns' : 'Ascunde Răspuns';
+}
+
+function removeCard(button, boxId, question, answer) {
+    const cardList = document.getElementById(`${boxId}-cards`);
+    cardList.removeChild(button.parentElement);
+    removeCardFromLocalStorage(boxId, question, answer);
+}
+
+function removeCardFromLocalStorage(boxId, question, answer) {
+    let cards = JSON.parse(localStorage.getItem(`${boxId}Cards`)) || [];
+    cards = cards.filter(card => !(card.question === question && card.answer === answer));
+    localStorage.setItem(`${boxId}Cards`, JSON.stringify(cards));
+}
+
+function deleteAllCards(boxId) {
+    const cardList = document.getElementById(`${boxId}-cards`);
+    cardList.innerHTML = ''; 
+    localStorage.removeItem(`${boxId}Cards`); 
+}
+
+function drag(event) {
+    event.dataTransfer.setData("text/plain", event.target.innerHTML);
+    event.dataTransfer.setData("boxId", event.target.closest('ul').id);
+}
+
+function dropCard(event, boxId) {
+    event.preventDefault();
+    const cardData = event.dataTransfer.getData("text/plain");
+    const sourceBoxId = event.dataTransfer.getData("boxId").replace('-cards', '');
+
+    if (sourceBoxId !== boxId) {
+        const question = extractQuestionAndAnswer(cardData)[0];
+        const count = countOccurrencesInBox(boxId, question);
+
+        // Check if the question is already in the box twice
+        if (count >= 2) {
+            alert("Această întrebare a fost deja adăugată de 2 ori în această cutie.");
+            return; 
         }
-        
-        function addCardToBox(boxId, question, answer) {
-            const cardList = document.getElementById(`${boxId}-cards`);
-            const listItem = document.createElement('li');
-            listItem.draggable = true;
-            listItem.innerHTML = `
-                <strong>${question}</strong>
-                <p class="answer hidden">${answer}</p>
-                <button class="show-answer" onclick="toggleAnswer(this)">Afișează Răspuns</button>
-                <button class="remove-card" onclick="removeCard(this, '${boxId}', '${question}', '${answer}')">Șterge Card</button>
-            `;
-            cardList.appendChild(listItem);
-            listItem.ondragstart = drag;
-            listItem.ondrop = function(event) { dropCard(event, boxId); };
-            listItem.ondragover = function(event) { event.preventDefault(); };
-        }
-        
-        function saveCardToLocalStorage(boxId, question, answer) {
-            const cards = JSON.parse(localStorage.getItem(`${boxId}Cards`)) || [];
-            cards.push({ question, answer });
-            localStorage.setItem(`${boxId}Cards`, JSON.stringify(cards));
-        }
-        
-        function toggleAnswer(button) {
-            const answer = button.previousElementSibling;
-            answer.classList.toggle('hidden');
-            button.innerText = answer.classList.contains('hidden') ? 'Afișează Răspuns' : 'Ascunde Răspuns';
-        }
-        
-        function removeCard(button, boxId, question, answer) {
-            const cardList = document.getElementById(`${boxId}-cards`);
-            cardList.removeChild(button.parentElement);
-            removeCardFromLocalStorage(boxId, question, answer);
-        }
-        
-        function removeCardFromLocalStorage(boxId, question, answer) {
-            let cards = JSON.parse(localStorage.getItem(`${boxId}Cards`)) || [];
-            cards = cards.filter(card => !(card.question === question && card.answer === answer));
-            localStorage.setItem(`${boxId}Cards`, JSON.stringify(cards));
-        }
-        
-        function deleteAllCards(boxId) {
-            const cardList = document.getElementById(`${boxId}-cards`);
-            cardList.innerHTML = ''; 
-            localStorage.removeItem(`${boxId}Cards`); 
-        }
-        
-        function drag(event) {
-            event.dataTransfer.setData("text/plain", event.target.innerHTML);
-            event.dataTransfer.setData("boxId", event.target.closest('ul').id);
-        }
-        
-        function dropCard(event, boxId) {
-            event.preventDefault();
-            const cardData = event.dataTransfer.getData("text/plain");
-            const sourceBoxId = event.dataTransfer.getData("boxId").replace('-cards', '');
-        
-            if (sourceBoxId !== boxId) {
-                const question = extractQuestionAndAnswer(cardData)[0];
-                const count = countOccurrencesInBox(boxId, question);
-        
-                // Check if the question is already in the box twice
-                if (count >= 2) {
-                    alert("Această întrebare a fost deja adăugată de 2 ori în această cutie.");
-                    return; 
-                }
-        
-                const cardList = document.getElementById(`${boxId}-cards`);
-                const listItem = document.createElement('li');
-                listItem.draggable = true; 
-                listItem.innerHTML = cardData;
-                cardList.appendChild(listItem);
-        
-                // Reassign drag-and-drop event handlers
-                listItem.ondragstart = drag;
-                listItem.ondrop = function(event) { dropCard(event, boxId); };
-                listItem.ondragover = function(event) { event.preventDefault(); };
-        
-                // Remove from the source box and update local storage
-                removeCardFromLocalStorage(sourceBoxId, ...extractQuestionAndAnswer(cardData));
-                saveCardToLocalStorage(boxId, ...extractQuestionAndAnswer(cardData));
-            }
-        }
-        
-        function extractQuestionAndAnswer(cardData) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(cardData, 'text/html');
-            const question = doc.querySelector('strong').innerText;
-            const answer = doc.querySelector('.answer').innerText;
-            return [question, answer];
-        }
-        
-        function countOccurrencesInBox(boxId, question) {
-            const cards = JSON.parse(localStorage.getItem(`${boxId}Cards`)) || [];
-            return cards.filter(card => card.question === question).length;
-        }
+
+        const cardList = document.getElementById(`${boxId}-cards`);
+        const listItem = document.createElement('li');
+        listItem.draggable = true; 
+        listItem.innerHTML = cardData;
+        cardList.appendChild(listItem);
+
+        // Reassign drag-and-drop event handlers
+        listItem.ondragstart = drag;
+        listItem.ondrop = function(event) { dropCard(event, boxId); };
+        listItem.ondragover = function(event) { event.preventDefault(); };
+
+        // Remove from the source box and update local storage
+        removeCardFromLocalStorage(sourceBoxId, ...extractQuestionAndAnswer(cardData));
+        saveCardToLocalStorage(boxId, ...extractQuestionAndAnswer(cardData));
+    }
+}
+
+function extractQuestionAndAnswer(cardData) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(cardData, 'text/html');
+    const question = doc.querySelector('strong').innerText;
+    const answer = doc.querySelector('.answer').innerText;
+    return [question, answer];
+}
+
+function countOccurrencesInBox(boxId, question) {
+    const cards = JSON.parse(localStorage.getItem(`${boxId}Cards`)) || [];
+    return cards.filter(card => card.question === question).length;
+}
+
+// Touch event handlers for mobile devices
+let draggedItem = null;
+
+function handleTouchStart(event, listItem, boxId) {
+    draggedItem = listItem;
+    draggedItem.classList.add('dragging'); // Optional: Add a class for styling
+}
+
+function handleTouchMove(event) {
+    const touch = event.touches[0];
+    draggedItem.style.position = 'absolute';
+    draggedItem.style.left = `${touch.clientX}px`;
+    draggedItem.style.top = `${touch.clientY}px`;
+}
+
+function handleTouchEnd(event, boxId) {
+    const touch = event.changedTouches[0];
+    const dropZone = document.elementFromPoint(touch.clientX, touch.clientY);
+
+    if (dropZone && dropZone.closest('ul') && dropZone.closest('ul').id !== `${boxId}-cards`) {
+        dropCard({ target: dropZone, preventDefault: () => {} }, boxId);
+    }
+
+    draggedItem.classList.remove('dragging'); // Optional: Remove the class
+    draggedItem.style.position = ''; // Reset styles
+    draggedItem = null; // Reset dragged item
+}
+
         </script>
         
     
